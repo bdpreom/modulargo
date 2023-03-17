@@ -167,3 +167,89 @@ func NewRecipeHandler(ctx context.Context, collection *mongo.Collection, redisCl
 
 	c.JSON(http.StatusOK, recipe)
 }
+
+
+===
+// var recipes []models.Recipe
+// var Client *mongo.Client = database.DBSet()
+
+// func bulkload() {
+// 	recipes = make([]models.Recipe, 0)
+// 	file, _ := ioutil.ReadFile("recipes.json")
+// 	_ = json.Unmarshal([]byte(file), recipes)
+// 	//json file loaded into recipes
+
+// 	var listOfRecipes []interface{} //db range loaded here
+// 	for _, recipe := range recipes {
+// 		listOfRecipes = append(listOfRecipes, recipe)
+// 	}
+// 	collection := Client.Database("shadman").Collection("recipes")
+// 	var ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+// 	defer cancel()
+// 	intestManyResult, err := collection.InsertMany(ctx, listOfRecipes)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	log.Println("Inserted recipes: ", len(intestManyResult.InsertedIDs))
+
+// }
+====
+
+
+func AuthMiddleware() gin.HandlerFunc {
+return func(c *gin.Context) {
+if c.GetHeader("X-API-KEY") !=
+os.Getenv("X_API_KEY") {
+c.AbortWithStatus(401)
+}
+c.Next()
+}
+}
+
+authorized := router.Group("/")
+authorized.Use(AuthMiddleware()){
+authorized.POST("/recipes",
+recipesHandler.NewRecipeHandler)
+authorized.GET("/recipes",
+recipesHandler.ListRecipesHandler)
+authorized.PUT("/recipes/:id",
+recipesHandler.UpdateRecipeHandler)
+ 
+authorized.DELETE("/recipes/:id",
+recipesHandler.DeleteRecipeHandler)
+}
+
+
+===
+import (
+    "context"
+    "fmt"
+    "go.mongodb.org/mongo-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo/options"
+    "log"
+)
+
+type Person struct {
+    Name string
+    Age  int
+}
+
+func main() {
+    clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+    client, err := mongo.Connect(context.Background(), clientOptions)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer client.Disconnect(context.Background())
+
+    coll := client.Database("test").Collection("people")
+    people := []interface{}{
+        Person{Name: "John", Age: 30},
+        Person{Name: "Jane", Age: 25},
+        Person{Name: "Bob", Age: 40},
+    }
+    result, err := coll.InsertMany(context.Background(), people)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Inserted %v documents\n", len(result.InsertedID
